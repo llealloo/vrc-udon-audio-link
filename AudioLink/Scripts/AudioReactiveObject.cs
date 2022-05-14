@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
+#if VRC_SDK_VRCSDK2 || VRC_SDK_VRCSDK3
 using VRC.SDKBase;
+#endif
 using System;
 using System.Collections;
 

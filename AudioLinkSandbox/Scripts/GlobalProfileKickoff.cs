@@ -1,11 +1,16 @@
 ﻿// MIT License
 // Copyright (c) 2021 Merlin
 
-using UdonSharp;
 using UnityEngine;
 
+#if UDON
+using UdonSharp;
 [DefaultExecutionOrder(-1000000000)]
 public class GlobalProfileKickoff : UdonSharpBehaviour
+#else
+[DefaultExecutionOrder(-1000000000)]
+public class GlobalProfileKickoff : MonoBehaviour
+#endif
 {
     [System.NonSerialized]
     public System.Diagnostics.Stopwatch stopwatch;

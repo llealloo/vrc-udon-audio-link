@@ -1,14 +1,22 @@
 ﻿
-using UdonSharp;
 using UnityEngine;
+#if VRC_SDK_VRCSDK2 || VRC_SDK_VRCSDK3
 using VRC.SDKBase;
+#endif
+#if UDON
 using VRC.Udon;
+using UdonSharp;
+#endif
 
 
 #if !COMPILER_UDONSHARP && UNITY_EDITOR // These using statements must be wrapped in this check to prevent issues on builds
+#if VRC_SDK_VRCSDK2 || VRC_SDK_VRCSDK3
 using VRC.SDKBase.Editor.BuildPipeline;
+#endif
 using UnityEditor;
+#if UDON
 using UdonSharpEditor;
+#endif
 #endif
 
 namespace AudioLink

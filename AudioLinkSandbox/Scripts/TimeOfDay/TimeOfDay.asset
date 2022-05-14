@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: TimeOfDay
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 19227567e41aba440a032a6ca98d4058,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: 990a07bc74b92714d8cafc5d8afe3c6e,
     type: 2}
   udonAssembly: 
   assemblyError: 

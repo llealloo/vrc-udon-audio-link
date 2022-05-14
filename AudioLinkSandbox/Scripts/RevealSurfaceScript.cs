@@ -1,10 +1,16 @@
 ﻿
-using UdonSharp;
 using UnityEngine;
+#if VRC_SDK_VRCSDK2 || VRC_SDK_VRCSDK3
 using VRC.SDKBase;
+#endif
+#if UDON
 using VRC.Udon;
+using UdonSharp;
 
 public class RevealSurfaceScript : UdonSharpBehaviour
+#else
+public class RevealSurfaceScript : MonoBehaviour
+#endif
 {
 	public Material AdjustGiveQuaternion;
     void Start()

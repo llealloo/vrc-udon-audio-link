@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: AudioReactiveSurface
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 992fff9e87c26ed418281391feae11ca,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: ef18f0958aa825e4d83363fca1da8f19,
     type: 2}
   udonAssembly: 
   assemblyError: 

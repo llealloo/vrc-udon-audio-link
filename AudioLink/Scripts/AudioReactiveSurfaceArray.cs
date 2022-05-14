@@ -1,7 +1,9 @@
 ﻿
 using UnityEngine;
 using System.Collections;
+#if VRC_SDK_VRCSDK2 || VRC_SDK_VRCSDK3
 using VRC.SDKBase;
+#endif
 
 namespace VRCAudioLink
 {

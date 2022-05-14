@@ -1,12 +1,18 @@
-﻿using UdonSharp;
-using UnityEngine;
+﻿using UnityEngine;
+#if VRC_SDK_VRCSDK2 || VRC_SDK_VRCSDK3
 using VRC.SDKBase;
-using VRC.Udon;
+#endif
 
 namespace cnlohr
 {
+	#if UDON
+	using VRC.Udon;
+	using UdonSharp;
 	[UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 	public class TimeOfDay : UdonSharpBehaviour
+	#else
+	public class TimeOfDay : MonoBehaviour
+	#endif
 	{
 		public Light lightToControl;
 		public Material matSquareStarrySky;
@@ -27,6 +33,7 @@ namespace cnlohr
 			qch_mirror = new Quaternion( 0, 1, 0, 0 );  //Flips sun around over the floor.
 		}
 		
+		#if UDON
 		override public void OnPickup ()
 		{
 			bHeld = true;
@@ -36,6 +43,7 @@ namespace cnlohr
 		{
 			bHeld = false;
 		}
+		#endif
 
 		void Update()
 		{

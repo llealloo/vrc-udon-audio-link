@@ -227,7 +227,7 @@ namespace VRCAudioLink
                     string positionStr = System.TimeSpan.FromSeconds(videoPlayer.trackPosition).ToString(@"hh\:mm\:ss");
                     SetStatusText(positionStr + "/" + durationStr);
                     progressSliderControl.SetActive(true);
-                    progressSlider.value = Mathf.Clamp01(videoPlayer.trackPosition / videoPlayer.trackDuration);
+                    progressSlider.value = (videoPlayer.trackDuration <= 0) ? 0f : Mathf.Clamp01(videoPlayer.trackPosition / videoPlayer.trackDuration);
                 }
                 progressSlider.interactable = enableControl;
             }

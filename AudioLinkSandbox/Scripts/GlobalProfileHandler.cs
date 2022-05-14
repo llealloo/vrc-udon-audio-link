@@ -1,9 +1,14 @@
 ﻿#define AVERAGE_OUTPUT
-using UdonSharp;
 using UnityEngine;
 
+#if UDON
+using UdonSharp;
 [DefaultExecutionOrder(1000000000)]
 public class GlobalProfileHandler : UdonSharpBehaviour
+#else
+[DefaultExecutionOrder(1000000000)]
+public class GlobalProfileHandler : MonoBehaviour
+#endif
 {
     public UnityEngine.UI.Text _timeText;
     private GlobalProfileKickoff _kickoff;

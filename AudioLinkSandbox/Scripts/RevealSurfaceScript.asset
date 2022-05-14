@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: RevealSurfaceScript
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: f3973b0d6f92d6a4cb52e95d968e9495,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: 78c0cf55410c57147a8735b4472a56b6,
     type: 2}
   udonAssembly: 
   assemblyError: 

@@ -15,7 +15,7 @@
         // Physically based Standard lighting model, and enable shadows on all light types
 		#pragma surface surf Standard fullforwardshadows alpha
 
-		#include "/Assets/cnlohr/Shaders/hashwithoutsine/hashwithoutsine.cginc"
+		#include "/Assets/AudioLinkSandbox/Shaders/hashwithoutsine/hashwithoutsine.cginc"
 		#include "/Assets/AudioLink/Shaders/AudioLink.cginc"
         #pragma target 5.0
 

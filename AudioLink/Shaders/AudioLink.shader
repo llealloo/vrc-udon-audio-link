@@ -21,11 +21,13 @@ Shader "AudioLink/Internal/AudioLink"
         _SourceDistance("Distance to Source", float) = 1
         _SourceSpatialBlend("Spatial Blend", float) = 0 //0-1 = 2D -> 3D curve
         
-        _ThemeColorsEnable( "Theme Colors Enable", float ) = 0
+        _ThemeColorMode( "Theme Color Mode", int ) = 0
         _ThemeColor0 ("Theme Color 0", Color ) = (1.0,1.0,0.0,1.0)
         _ThemeColor1 ("Theme Color 1", Color ) = (0.0,0.0,1.0,1.0)
         _ThemeColor2 ("Theme Color 2", Color ) = (1.0,0.0,0.0,1.0)
         _ThemeColor3 ("Theme Color 3", Color ) = (0.0,1.0,0.0,1.0)
+
+        // _VideoTexture ("Video Texture", 2D) = "green"
     }
 
     SubShader
@@ -40,7 +42,9 @@ Shader "AudioLink/Internal/AudioLink"
         Pass
         {
             CGINCLUDE
-            #if UNITY_UV_STARTS_AT_TOP
+            //On Quest UNITY_UV_STARTS_AT_TOP is false but actual uv behaves as it's true breaking entire audio texture,same issue occur in editor on OpenGL ES mode
+            //So SHADER_API_GLES3 is included to fix texture on Quest, in case of same issue occuring on PC entire conditioning here need to be removed.
+            #if UNITY_UV_STARTS_AT_TOP || SHADER_API_GLES3
             #define AUDIO_LINK_ALPHA_START(BASECOORDY) \
                 float2 guv = IN.globalTexcoord.xy; \
                 uint2 coordinateGlobal = round(guv/_SelfTexture2D_TexelSize.xy - 0.5); \
@@ -85,7 +89,7 @@ Shader "AudioLink/Internal/AudioLink"
             uniform float _SourceVolume;
             uniform float _SourceDistance;
             uniform float _SourceSpatialBlend;
-            uniform float _ThemeColorsEnable;
+            uniform uint _ThemeColorMode;
             uniform float4 _ThemeColor0;
             uniform float4 _ThemeColor1;
             uniform float4 _ThemeColor2;
@@ -321,7 +325,7 @@ Shader "AudioLink/Internal/AudioLink"
                     // Slide pixels (coordinateLocal.x > 0)
                     float4 lastvalTiming = AudioLinkGetSelfPixelData(ALPASS_GENERALVU + int2(4, 1)); // Timing for 4-band, move at 90 Hz.
                     lastvalTiming.x += unity_DeltaTime.x * AUDIOLINK_4BAND_TARGET_RATE;
-                    int framesToRoll = floor( lastvalTiming.x );
+                    uint framesToRoll = floor( lastvalTiming.x );
 
                     if( framesToRoll == 0 )
                     {
@@ -535,7 +539,13 @@ Shader "AudioLink/Internal/AudioLink"
                     //Second Row y = 1
                     if( coordinateLocal.x < 4 )
                     {
-                        if( _ThemeColorsEnable>0.5 )
+                        // HAAAX - This should be done through a proper switch
+                        if( coordinateLocal.x == 0 ) return float4(AudioLinkHSVtoRGB(AudioLinkGetSelfPixelData(uint2(16*1.5+1, 32+8+ 2*0 + 1))), 1);
+                        if( coordinateLocal.x == 1 ) return float4(AudioLinkHSVtoRGB(AudioLinkGetSelfPixelData(uint2(16*1.5+1, 32+8+ 2*1 + 1))), 1);
+                        if( coordinateLocal.x == 2 ) return float4(AudioLinkHSVtoRGB(AudioLinkGetSelfPixelData(uint2(16*1.5+1, 32+8+ 2*2 + 1))), 1);
+                        if( coordinateLocal.x == 3 ) return float4(AudioLinkHSVtoRGB(AudioLinkGetSelfPixelData(uint2(16*1.5+1, 32+8+ 2*3 + 1))), 1);
+
+                        if( _ThemeColorMode == 1 )
                         {
                             if( coordinateLocal.x == 0 ) return _ThemeColor0;
                             if( coordinateLocal.x == 1 ) return _ThemeColor1;
@@ -1184,7 +1194,7 @@ Shader "AudioLink/Internal/AudioLink"
                 }
                 else
                 {
-					// BEAT DETECTION STILL IN EARLY DEVELOPMENT - DO NOT USE
+                    // BEAT DETECTION STILL IN EARLY DEVELOPMENT - DO NOT USE
                     float4 prev = AudioLinkGetSelfPixelData(coordinateGlobal.xy);
                     if( coordinateLocal.x == 5 )
                     {
@@ -1216,6 +1226,108 @@ Shader "AudioLink/Internal/AudioLink"
                     }
                 }
                 return 1;
+            }
+            ENDCG
+        }
+
+        Pass
+        {
+            Name "Pass12-VideoTheme"
+            CGPROGRAM
+            // sampler2D _VideoTexture;
+            #define SAMPLE_COUNT 16
+            const static float2 samplePositions[SAMPLE_COUNT] = {
+                // // hand picked. https://www.desmos.com/calculator/rp4fjgbba4
+                // {0.87, 0.662}, {0.63, 0.555}, {0.83, 0.84}, {0.627, 0.947},
+                // {0.863, 0.132}, {0.632, 0.096}, {0.947, 0.384}, {0.716, 0.315},
+                // {0.38, 0.163}, {0.407, 0.377}, {0.177, 0.305}, {0.108, 0.075},
+                // {0.365, 0.673}, {0.143, 0.575}, {0.12, 0.92}, {0.367, 0.845}
+
+                // hand picked https://www.desmos.com/calculator/iwbfj8p9bq
+                // chosen such that when y is flipped, we still get a good coverage.
+                {0.91, 0.616},{0.602, 0.577},{0.821, 0.829},{0.594, 0.93},
+                {0.931, 0.05},{0.65, 0.164},{0.887, 0.274},{0.71, 0.307},
+                {0.335, 0.213},{0.454, 0.407},{0.166, 0.272},{0.108, 0.075},
+                {0.365, 0.673},{0.14, 0.58},{0.22, 0.928},{0.425, 0.93},
+            };
+
+            float sort_key1(float3 hsv) {
+                return hsv.y + hsv.z; // More vibrant colors are better
+            }
+            float sort_key2(float3 hsv) {
+                return hsv.x;
+            }
+
+
+            float rand(float2 co){
+                return frac(sin(dot(co, float2(12.9898, 78.233))) * 43758.5453);
+            }
+
+            float4 frag (v2f_customrendertexture IN) : SV_Target
+            {
+                uint2 ALPASS_VIDEOTHEME = uint2(0, 32);
+                AUDIO_LINK_ALPHA_START(ALPASS_VIDEOTHEME)
+                // return float4(0, 0, 1, 1);
+
+                // Debug to see raw colors.
+                if (coordinateLocal.y >= SAMPLE_COUNT) {
+                    float3 hsv = AudioLinkGetSelfPixelData(coordinateGlobal + uint2(0, -SAMPLE_COUNT)).rgb;
+                    // hsv.r = 0;
+                    // hsv.y = 0;
+                    return float4(AudioLinkHSVtoRGB(hsv), 1);
+                }
+
+                if (coordinateLocal.x == 0) {
+                    float2 samplePosition = samplePositions[coordinateLocal.y % SAMPLE_COUNT];
+                    // Pick the better of two samples.
+                    float3 sample_a = AudioLinkRGBtoHSV(tex2D(_VideoTexture, samplePosition).rgb);
+                    float3 sample_b = AudioLinkRGBtoHSV(tex2D(_VideoTexture, float2(samplePosition.x, 1-samplePosition.y)).rgb);
+                    float3 better_sample = sort_key1(sample_a) < sort_key1(sample_b) ? sample_b : sample_a;
+                    better_sample.yz = lerp(better_sample.yz, float2(1,1), .2); // Make things slightly more vivid.
+                    return float4(better_sample, 1);
+                } else if (coordinateLocal.x <= SAMPLE_COUNT) {
+                    // half-sort even/odd sort with sort_key1.
+                    uint x_base = coordinateLocal.x - 1; // Start off with even
+                    bool even = x_base % 2 == 0;
+                    bool current_sample_is_bottom = (coordinateLocal.x + coordinateLocal.y)% 2 == 1;
+                    int y_offset = current_sample_is_bottom? 1 : -1;
+                    if (!even && (coordinateLocal.y == 0 || coordinateLocal.y == SAMPLE_COUNT-1)) y_offset = 0;
+                    // return even? float4(1,0,0,1) : float4(0,0,1,1);
+                    // return current_sample_is_bottom? float4(1,0,0,1) : float4(0,1,0,1);
+                    // return float4(float(y_offset), float(-y_offset),0,1);
+                    float4 sample_other = AudioLinkGetSelfPixelData(coordinateGlobal + int2(-1, y_offset));
+                    float4 sample_self = AudioLinkGetSelfPixelData(coordinateGlobal + uint2(-1, 0));
+                    float4 sample_top = current_sample_is_bottom? sample_other : sample_self;
+                    float4 sample_bot = current_sample_is_bottom? sample_self : sample_other;
+                    return (sort_key1(sample_bot) < sort_key1(sample_top))? sample_self : sample_other;
+                } else if (coordinateLocal.x <= SAMPLE_COUNT*1.5) {
+                    if (coordinateLocal.y < SAMPLE_COUNT / 2) {
+                        return 0; // Discard the bad half of the samples
+                    }
+                    // half-sort even/odd sort with sort_key2.
+                    uint x_base = coordinateLocal.x - 1; // Start off with even
+                    bool even = x_base % 2 == 0;
+                    bool current_sample_is_bottom = (coordinateLocal.x + coordinateLocal.y)% 2 == 1;
+                    int y_offset = current_sample_is_bottom? 1 : -1;
+                    if (!even && (coordinateLocal.y == SAMPLE_COUNT / 2 || coordinateLocal.y == SAMPLE_COUNT-1)) y_offset = 0;
+                    float4 sample_other = AudioLinkGetSelfPixelData(coordinateGlobal + int2(-1, y_offset));
+                    float4 sample_self = AudioLinkGetSelfPixelData(coordinateGlobal + uint2(-1, 0));
+                    float4 sample_top = current_sample_is_bottom? sample_other : sample_self;
+                    float4 sample_bot = current_sample_is_bottom? sample_self : sample_other;
+                    float4 hsv = (sort_key2(sample_bot) < sort_key2(sample_top))? sample_self : sample_other;
+                    return hsv;
+                } else if (coordinateLocal.x == SAMPLE_COUNT*1.5+1) {
+                    if (coordinateLocal.y % 2 == 0) {
+                        return 0;
+                    }
+                    return AudioLinkGetSelfPixelData(coordinateGlobal + uint2(-1, 0));
+                } else {
+                    return AudioLinkGetSelfPixelData(coordinateGlobal + uint2(-1, 0));
+                }
+
+                if (coordinateLocal.y == 0 ) return float4(1,0,0,1);
+                return float4(0,float(coordinateLocal.y) / 32,0,1);
+                // if (coordinateLocal.y > 1) return float4(0, 1, 0, 1);
             }
             ENDCG
         }

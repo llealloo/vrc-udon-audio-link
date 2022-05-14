@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.8 - April 27th, 2022
+### New features
+- An editor scripting define, `AUDIOLINK`, which will be automatically added when AudioLink is included. (Thanks, Float3)
+- AudioLink can now compile without VRCSDK and UDON, for use outside of VRChat. This kind of usecase is still experimental at best, though. (Thanks, Float3 and yewnyx)
+### Changes
+- AudioLink theme colors have been cleaned up, including a new demo in the example scene, and the ability to change the colors in realtime in the editor. (Thanks, DomNomNom)
+- Changed folder structure to put less clutter into user projects.
+### Bugfixes
+- Fix vertical UV flip of the AudioLink texture on Quest. (Thanks, Shadowriver)
+- Fix error when using "Link all sound reactive objects to this AudioLink" button. (Thanks, Nestorboy)
+- Add a header guard to `AudioLink.cginc` to prevent duplicate includes. (Thanks, PiMaker)
+- Fix various warnings in shader code. (Thanks, Float3)
+- Fix NaN-propagation issue in the included video player. (Thanks, Texelsaur)
+- Add a player validity check to the included video player. (Thanks, Texelsaur)
+- Use `Networking.LocalPlayer.isInstanceOwner` instead of `Networking.IsInstanceOwner`, which is broken. (Thanks, techanon)
+
 ## 0.2.7 - December 1st, 2021
 ### New features
 - Make AudioLink framerate-invariant, instead of assuming a specific framerate. Features that rely on timing have been updated to reflect this change.

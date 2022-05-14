@@ -115,7 +115,7 @@ SubShader {
     #ifndef SKYBOX_SUNDISK
 		float4 _NoiseTex_ST;
 
-		#include "Assets/cnlohr/Shaders/hashwithoutsine/hashwithoutsine.cginc"
+		#include "/Assets/AudioLinkSandbox/Shaders/hashwithoutsine/hashwithoutsine.cginc"
 		
         #if defined(_SUNDISK_NONE)
             #define SKYBOX_SUNDISK SKYBOX_SUNDISK_NONE
@@ -441,6 +441,7 @@ SubShader {
             half3 ray = IN.rayDir.xyz;
             half y = ray.y / SKY_GROUND_THRESHOLD;
         #else
+            half3 ray = 0;
             half y = IN.skyGroundFactor;
         #endif
 		

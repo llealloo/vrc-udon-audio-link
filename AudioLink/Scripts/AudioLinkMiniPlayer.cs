@@ -432,12 +432,18 @@ namespace VRCAudioLink
         public bool _IsAdmin()
         {
             VRCPlayerApi player = Networking.LocalPlayer;
+            if (!Utilities.IsValid(player))
+                return false;
+
             return player.isMaster || player.isInstanceOwner;
         }
 
         public bool _CanTakeControl()
         {
             VRCPlayerApi player = Networking.LocalPlayer;
+            if (!Utilities.IsValid(player))
+                return false;
+
             return player.isMaster || player.isInstanceOwner || !_syncLocked;
         }
 

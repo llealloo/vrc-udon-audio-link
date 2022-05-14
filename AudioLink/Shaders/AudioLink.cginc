@@ -1,3 +1,6 @@
+#ifndef AUDIOLINK_CGINC_INCLUDED
+#define AUDIOLINK_CGINC_INCLUDED
+
 // Map of where features in AudioLink are.
 #define ALPASS_DFT                      uint2(0,4)  //Size: 128, 2
 #define ALPASS_WAVEFORM                 uint2(0,6)  //Size: 128, 16
@@ -74,6 +77,8 @@ uniform float4               _AudioTexture_TexelSize;
     uniform Texture2D<float4>   _AudioTexture;
     #define AudioLinkData(xycoord) _AudioTexture[uint2(xycoord)]
 #endif
+
+sampler2D _VideoTexture;
 
 // Convenient mechanism to read from the AudioLink texture that handles reading off the end of one line and onto the next above it.
 float4 AudioLinkDataMultiline(uint2 xycoord) { return AudioLinkData(uint2(xycoord.x % AUDIOLINK_WIDTH, xycoord.y + xycoord.x/AUDIOLINK_WIDTH)); }
@@ -158,6 +163,16 @@ float3 AudioLinkHSVtoRGB(float3 HSV)
     return RGB + M;
 }
 
+float3 AudioLinkRGBtoHSV(float3 c)
+{
+    float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+    float4 p = lerp( float4( c.bg, K.wz ), float4( c.gb, K.xy ), step( c.b, c.g ) );
+    float4 q = lerp( float4( p.xyw, c.r ), float4( c.r, p.yzx ), step( p.x, c.r ) );
+    float d = q.x - min( q.w, q.y );
+    float e = 1.0e-10;
+    return float3( abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+}
+
 float3 AudioLinkCCtoRGB(float bin, float intensity, int rootNote)
 {
     float note = bin / AUDIOLINK_EXPBINS;
@@ -196,7 +211,7 @@ float4 AudioLinkGetAmplitudeAtFrequency(float hertz)
 }
 
 // Sample the amplitude of a given semitone in an octave. Octave is in [0; 9] while note is [0; 11].
-float AudioLinkGetAmplitudeAtNote(float octave, float note)
+float4 AudioLinkGetAmplitudeAtNote(float octave, float note)
 {
     float quarter = note * 2.0;
     return AudioLinkLerpMultiline(ALPASS_DFT + float2(octave * AUDIOLINK_EXPBINS + quarter, 0));
@@ -222,3 +237,5 @@ float AudioLinkGetChronoTimeInterval(uint index, uint band, float speed, float i
 {
     return AudioLinkGetChronoTimeNormalized(index, band, speed) * interval;
 }
+
+#endif

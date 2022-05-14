@@ -67,6 +67,10 @@ Material:
         m_Texture: {fileID: 8600000, guid: 408ce269c71edce4ab7da49b713ee342, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _VideoTexture:
+        m_Texture: {fileID: 8400000, guid: f0e6dd0463550ae4fb73db663a9eae4c, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _texcoord:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -109,11 +113,12 @@ Material:
     - _PhiDeltaCorrection: 4
     - _SmoothnessTextureChannel: 0
     - _SortNotes: 0
-    - _SourceDistance: 25.74769
+    - _SourceDistance: 24.187166
     - _SourceSpatialBlend: 0
     - _SourceVolume: 0.9
     - _SpecularHighlights: 1
     - _SrcBlend: 1
+    - _ThemeColorMode: 0
     - _ThemeColorsEnable: 0
     - _Threshold0: 0.45
     - _Threshold1: 0.45

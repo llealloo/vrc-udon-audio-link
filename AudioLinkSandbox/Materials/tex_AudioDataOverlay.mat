@@ -77,5 +77,5 @@ Material:
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
-    - _InputBasisQuaternion: {r: -0.012154026, g: -0.24866857, b: 0.004861233, a: 0.96850026}
-    - _InputBasisVertex: {r: -7.174846, g: 0.8670498, b: -11.463796, a: 0}
+    - _InputBasisQuaternion: {r: 0, g: 0, b: 0, a: 1}
+    - _InputBasisVertex: {r: -7.6080003, g: 0.75574815, b: -11.632999, a: 0}

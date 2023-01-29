@@ -33,6 +33,8 @@
 #define ALPASS_FILTEREDVU               uint2(24,28) //Size: 4, 4
 #define ALPASS_FILTEREDVU_INTENSITY     uint2(24,28) //Size: 4, 1
 #define ALPASS_FILTEREDVU_MARKER        uint2(24,29) //Size: 4, 1
+// There is an undocumented, probably changing area having to do with beat detection at 28,28
+#define ALPASS_FILTEREDVU_LEVELTIMING   uint2(32,28) //Size: 4, 4
 #define ALPASS_GLOBAL_STRINGS           uint2(40,28) //Size: 8, 4
 
 #define ALPASS_VUHISTORY                uint2(0,32)  //Size: 128, 5

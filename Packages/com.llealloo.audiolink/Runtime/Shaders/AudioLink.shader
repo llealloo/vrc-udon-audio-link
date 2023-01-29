@@ -16,6 +16,9 @@ Shader "AudioLink/Internal/AudioLink"
         _Threshold2("Threshold 2", Range(0.0, 1.0)) = 0.45
         _Threshold3("Threshold 3", Range(0.0, 1.0)) = 0.45
         [ToggleUI] _EnableAutogain("Enable Autogain", float) = 1
+
+        [ToggleUI] _EnableAutoLevel("Enable Autolevel", float) = 0
+
         _AutogainDerate ("Autogain Derate", Range(.001, .5)) = 0.1
         _SourceVolume("Audio Source Volume", float) = 1
         _SourceDistance("Distance to Source", float) = 1
@@ -103,6 +106,7 @@ Shader "AudioLink/Internal/AudioLink"
 
             // Extra Properties
             uniform float _EnableAutogain;
+            uniform float _EnableAutoLevel;
             uniform float _AutogainDerate;
 
             // Set by Udon
@@ -141,6 +145,34 @@ Shader "AudioLink/Internal/AudioLink"
                     (float)((val >> 20) & 0x3ff),
                     (float)((val >> 30) & 0x3ff)
                 );
+            }
+
+            inline float Compute4BandRaw( int band )
+            {
+                const float audioThresholds[4] = {_Threshold0, _Threshold1, _Threshold2, _Threshold3};
+                const float audioBands[4] = {_X0, _X1, _X2, _X3};
+                float threshold = AudioLinkGetSelfPixelData( ALPASS_FILTEREDVU_LEVELTIMING + uint2( 0, band ) ).z;
+                
+                // Get average of samples in the band
+                float total = 0.;
+                uint totalBins = AUDIOLINK_EXPBINS * AUDIOLINK_EXPOCT;
+                uint binStart = AudioLinkRemap(audioBands[band], 0., 1., AUDIOLINK_4BAND_FREQFLOOR * totalBins, AUDIOLINK_4BAND_FREQCEILING * totalBins);
+                uint binEnd = (band != 3) ? AudioLinkRemap(audioBands[band + 1], 0., 1., AUDIOLINK_4BAND_FREQFLOOR * totalBins, AUDIOLINK_4BAND_FREQCEILING * totalBins) : AUDIOLINK_4BAND_FREQCEILING * totalBins;
+                for (uint i=binStart; i<binEnd; i++)
+                {
+                    int2 spectrumCoord = int2(i % AUDIOLINK_WIDTH, i / AUDIOLINK_WIDTH);
+                    float rawMagnitude = AudioLinkGetSelfPixelData(ALPASS_DFT + spectrumCoord).y;
+                    total += rawMagnitude;
+                }
+                float magnitude = total / (binEnd - binStart);
+
+                // Log attenuation
+                magnitude = (magnitude * (log(1.1) / (log(1.1 + pow(_LogAttenuation, 4) * (1.0 - magnitude))))) / pow(threshold, 2);
+
+                // Contrast
+                magnitude = (magnitude * tan(1.57 * _ContrastSlope) + magnitude + _ContrastOffset * tan(1.57 * _ContrastSlope) - tan(1.57 * _ContrastSlope));
+
+                return magnitude;
             }
             ENDCG
 
@@ -302,32 +334,12 @@ Shader "AudioLink/Internal/AudioLink"
             {
                 AUDIO_LINK_ALPHA_START(ALPASS_AUDIOLINK)
 
-                float audioBands[4] = {_X0, _X1, _X2, _X3};
-                float audioThresholds[4] = {_Threshold0, _Threshold1, _Threshold2, _Threshold3};
-
                 int band = min(coordinateLocal.y, 3);
                 int delay = coordinateLocal.x;
                 if (delay == 0)
                 {
-                    // Get average of samples in the band
-                    float total = 0.;
-                    uint totalBins = AUDIOLINK_EXPBINS * AUDIOLINK_EXPOCT;
-                    uint binStart = AudioLinkRemap(audioBands[band], 0., 1., AUDIOLINK_4BAND_FREQFLOOR * totalBins, AUDIOLINK_4BAND_FREQCEILING * totalBins);
-                    uint binEnd = (band != 3) ? AudioLinkRemap(audioBands[band + 1], 0., 1., AUDIOLINK_4BAND_FREQFLOOR * totalBins, AUDIOLINK_4BAND_FREQCEILING * totalBins) : AUDIOLINK_4BAND_FREQCEILING * totalBins;
-                    float threshold = audioThresholds[band];
-                    for (uint i=binStart; i<binEnd; i++)
-                    {
-                        int2 spectrumCoord = int2(i % AUDIOLINK_WIDTH, i / AUDIOLINK_WIDTH);
-                        float rawMagnitude = AudioLinkGetSelfPixelData(ALPASS_DFT + spectrumCoord).y;
-                        total += rawMagnitude;
-                    }
-                    float magnitude = total / (binEnd - binStart);
-
-                    // Log attenuation
-                    magnitude = saturate(magnitude * (log(1.1) / (log(1.1 + pow(_LogAttenuation, 4) * (1.0 - magnitude))))) / pow(threshold, 2);
-
-                    // Contrast
-                    magnitude = saturate(magnitude * tan(1.57 * _ContrastSlope) + magnitude + _ContrastOffset * tan(1.57 * _ContrastSlope) - tan(1.57 * _ContrastSlope));
+                    // Is left-most pixel.
+                    float magnitude = saturate( Compute4BandRaw( band ) );
 
                     // Fade
                     float lastMagnitude = AudioLinkGetSelfPixelData(ALPASS_AUDIOLINK + int2(0, band)).y;
@@ -335,11 +347,9 @@ Shader "AudioLink/Internal/AudioLink"
                     lastMagnitude = saturate(lastMagnitude * (1.0 + (pow(lastMagnitude - 1.0, 4.0) * _FadeExpFalloff) - _FadeExpFalloff));     // Exp falloff
 
                     magnitude = max(lastMagnitude, magnitude);
-
                     return float4(magnitude, magnitude, magnitude, 1.);
-
-                // If part of the delay
                 } else {
+                    // If part of the delay
                     // Slide pixels (coordinateLocal.x > 0)
                     float4 lastvalTiming = AudioLinkGetSelfPixelData(ALPASS_GENERALVU + int2(4, 1)); // Timing for 4-band, move at 90 Hz.
                     lastvalTiming.x += unity_DeltaTime.x * AUDIOLINK_4BAND_TARGET_RATE;
@@ -1216,9 +1226,9 @@ Shader "AudioLink/Internal/AudioLink"
                 {
                     // PEMA
                 }
-                else
+                else if (coordinateLocal.x < 8 )
                 {
-					// BEAT DETECTION STILL IN EARLY DEVELOPMENT - DO NOT USE
+                    // BEAT DETECTION STILL IN EARLY DEVELOPMENT - DO NOT USE
                     float4 prev = AudioLinkGetSelfPixelData(coordinateGlobal.xy);
                     if( coordinateLocal.x == 5 )
                     {
@@ -1247,6 +1257,76 @@ Shader "AudioLink/Internal/AudioLink"
                     {
                         float4 this_bd_data = AudioLinkGetSelfPixelData(ALPASS_FILTEREDVU + uint2(4, coordinateLocal.y));
                         //Assume beats in the range of 80..160 BPM only.
+                    }
+                }
+                else if( coordinateLocal.x < 12 )
+                {
+                    // 4x4 area for ALPASS_FILTEREDVU_LEVELTIMING
+
+                    // Split into 4 columns.  Each row is a band.
+                    int band = coordinateLocal.y;
+                    const float4 audioBands = {_X0, _X1, _X2, _X3};
+                    const float4 audioThresholds = {_Threshold0, _Threshold1, _Threshold2, _Threshold3};
+
+                    switch( coordinateLocal.x )
+                    {
+                    case 8:
+                    {
+                        // A basic recomputation of the 4-band. Except raw.
+                        // This first column of 4 rows is:
+                        //  R: Current raw band magnitude.
+                        //  G: Parameters
+                        //        Row 0: "Is Autoleveling Enabled"
+                        //    B: Threshold amount from auto-level.
+                        //  A: "Confidence" in this.  If confidence is low, threshold will fall.
+
+                        float magnitude = Compute4BandRaw(band);
+                        float4 self = AudioLinkGetSelfPixelData( ALPASS_FILTEREDVU + coordinateLocal.xy );
+
+                        float para = 0.0;
+                        if( coordinateLocal.x == 8 )
+                            para = _EnableAutoLevel;
+                        else
+                            para = 0.0; // There are 3 more floats that can be used.
+
+                        // invamt should be between 0 for no boost to 0.3ish
+                        float amt = self.z;
+                        float confidence = self.w;
+
+                        if( _EnableAutoLevel )
+                        {
+                            // Compare the current value to "Magnitude" if it's very low, need to boost it.
+                            if( magnitude < 0.5 )
+                            {
+                                confidence = ( confidence - 0.05 * unity_DeltaTime.x );
+                                amt = lerp( amt - 0.1 * unity_DeltaTime.x, amt, saturate( confidence ) );
+                            }
+                            else
+                            {
+                                // When we are above the threshold.
+                                confidence = 1.1;  // Make sure it can't slop down for a few seconds.
+                                amt += 0.5 * unity_DeltaTime.x;
+                            }
+                            amt = clamp( amt, 0.1, audioThresholds[band] );
+                        }
+                        else
+                        {
+                            amt = audioThresholds[band];
+                        }
+
+                        return float4( magnitude, para, amt, confidence );
+                    }
+                    case 9:
+                    {
+                        // Include configured bands and threshold.
+                        if( band == 0 ) return audioBands;
+                        if( band == 1 ) return audioThresholds;
+                        return 0.0;
+                    }
+                    case 10:
+                    case 11:
+                        // Reserved
+                        return 0.0;
                     }
                 }
                 return 1;

@@ -27,10 +27,6 @@ Shader "AudioLink/Internal/AudioLinkSpectrumUI"
         _X1("X1", Range(0.242, 0.387)) = 0.25
         _X2("X2", Range(0.461, 0.628)) = 0.5
         _X3("X3", Range(0.704, 0.953)) = 0.75
-        _Threshold0("Threshold 0", Range(0.0, 1.0)) = 0.45
-        _Threshold1("Threshold 1", Range(0.0, 1.0)) = 0.45
-        _Threshold2("Threshold 2", Range(0.0, 1.0)) = 0.45
-        _Threshold3("Threshold 3", Range(0.0, 1.0)) = 0.45
         
     }
     SubShader
@@ -67,10 +63,6 @@ Shader "AudioLink/Internal/AudioLinkSpectrumUI"
             uniform float _X1;
             uniform float _X2;
             uniform float _X3;
-            uniform float _Threshold0;
-            uniform float _Threshold1;
-            uniform float _Threshold2;
-            uniform float _Threshold3;
             
             float _SpectrumGain;
             float _SpectrumColorMix;
@@ -121,12 +113,13 @@ Shader "AudioLink/Internal/AudioLinkSpectrumUI"
             fixed4 frag(v2f IN) : SV_Target
             {
                 float2 iuv = IN.uv;
-                float audioBands[4] = {_X0, _X1, _X2, _X3};
-                float audioThresholds[4] = {_Threshold0, _Threshold1, _Threshold2, _Threshold3};
                 float4 intensity = 0;
                 uint totalBins = AUDIOLINK_EXPBINS * AUDIOLINK_EXPOCT;
                 uint noteno = AudioLinkRemap(iuv.x, 0., 1., AUDIOLINK_4BAND_FREQFLOOR * totalBins, AUDIOLINK_4BAND_FREQCEILING * totalBins);
                 float notenof = AudioLinkRemap(iuv.x, 0., 1., AUDIOLINK_4BAND_FREQFLOOR * totalBins, AUDIOLINK_4BAND_FREQCEILING * totalBins);
+
+                float4 audioBands = AudioLinkData( ALPASS_FILTEREDVU_LEVELTIMING + uint2( 1, 0 ) );
+                float4 audioSetLevels = AudioLinkData( ALPASS_FILTEREDVU_LEVELTIMING + uint2( 1, 1 ) );
 
                 {
                     float4 spectrum_value_lower  =  AudioLinkData(float2(fmod(noteno, 128), (noteno/128)+4.0));
@@ -152,10 +145,9 @@ Shader "AudioLink/Internal/AudioLinkSpectrumUI"
                 {
                     band += (iuv.x > audioBands[j]);
                 }
-                for (int k=0; k<4; k++)
-                {
-                    threshold += (band == k) * saturate(_ThresholdThickness - abs(iuv.y - lerp(minHeight, maxHeight, audioThresholds[k]))) * 1000.;
-                }
+
+                float tHoldLevel = AudioLinkData( ALPASS_FILTEREDVU_LEVELTIMING + uint2( 0, band ) ).z;
+                threshold += saturate(_ThresholdThickness - abs(iuv.y - lerp(minHeight, maxHeight, tHoldLevel))) * 1000.;
                 threshold = saturate(threshold) * (1. - round((iuv.x % _ThresholdDottedLine) / _ThresholdDottedLine));
                 threshold *= (iuv.x > _X0);
 

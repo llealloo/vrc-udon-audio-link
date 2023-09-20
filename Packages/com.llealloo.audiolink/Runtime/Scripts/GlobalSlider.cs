@@ -34,7 +34,7 @@ namespace AudioLink
             deserializing = false;
         }
 
-        public void SlideUpdate()
+        public void _SlideUpdate()
         {
             if (slider == null)
                 return;

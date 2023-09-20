@@ -317,9 +317,9 @@ namespace AudioLink
             }
 #endif
 
-            UpdateSettings();
-            UpdateThemeColors();
-            UpdateCustomStrings();
+            _UpdateSettings();
+            _UpdateThemeColors();
+            _UpdateCustomStrings();
             if (audioSource == null)
             {
                 Debug.LogWarning("[AudioLink] No audioSource provided. AudioLink will not do anything until an audio source has been assigned.");
@@ -332,7 +332,7 @@ namespace AudioLink
             // Disable camera on start if user didn't ask for it
             if (!audioDataToggle)
             {
-                DisableReadback();
+                _DisableReadback();
             }
         }
 
@@ -545,7 +545,7 @@ namespace AudioLink
 
             if (audioSource != null)
             {
-                SendAudioOutputData();
+                _SendAudioOutputData();
 
                 // Used to correct for the volume of the audio source component
 
@@ -600,9 +600,9 @@ namespace AudioLink
             // Since we expect changes to values on this object in editor through the GUI,
             // we do not have explicit events to when things change.
 #if UNITY_EDITOR
-            UpdateSettings();
-            UpdateThemeColors();
-            UpdateCustomStrings();
+            _UpdateSettings();
+            _UpdateThemeColors();
+            _UpdateCustomStrings();
 #endif
         }
 #if UNITY_ANDROID
@@ -637,15 +637,15 @@ namespace AudioLink
         private void OnEnable()
         {
             InitIDs();
-            EnableAudioLink();
+            _EnableAudioLink();
         }
 
         private void OnDisable()
         {
-            DisableAudioLink();
+            _DisableAudioLink();
         }
 
-        public void UpdateSettings()
+        public void _UpdateSettings()
         {
             audioMaterial.SetFloat(_Gain, gain);
             audioMaterial.SetFloat(_FadeLength, fadeLength);
@@ -666,7 +666,7 @@ namespace AudioLink
 
         // Note: These might be changed frequently so as an optimization, they're in a different function
         // rather than bundled in with the other things in UpdateSettings().
-        public void UpdateThemeColors()
+        public void _UpdateThemeColors()
         {
             audioMaterial.SetInt(_ThemeColorMode, themeColorMode);
             audioMaterial.SetColor(_CustomThemeColor0, customThemeColor0);
@@ -718,7 +718,7 @@ namespace AudioLink
         }
 #endif
 
-        public void UpdateCustomStrings()
+        public void _UpdateCustomStrings()
         {
 #if UDONSHARP
             if (!Networking.IsOwner(gameObject))
@@ -777,7 +777,7 @@ namespace AudioLink
             audioMaterial.SetVectorArray(nameID, vecs);
         }
 
-        public void EnableAudioLink()
+        public void _EnableAudioLink()
         {
             audioRenderTexture.updateMode = CustomRenderTextureUpdateMode.Realtime;
 #if UDONSHARP
@@ -787,7 +787,7 @@ namespace AudioLink
 #endif
         }
 
-        public void DisableAudioLink()
+        public void _DisableAudioLink()
         {
             audioRenderTexture.updateMode = CustomRenderTextureUpdateMode.OnDemand;
 #if UDONSHARP
@@ -797,7 +797,7 @@ namespace AudioLink
 #endif
         }
 
-        public void EnableReadback()
+        public void _EnableReadback()
         {
             audioDataToggle = true;
 #if UNITY_ANDROID
@@ -805,7 +805,7 @@ namespace AudioLink
 #endif
         }
 
-        public void DisableReadback()
+        public void _DisableReadback()
         {
             audioDataToggle = false;
 #if UNITY_ANDROID
@@ -813,22 +813,22 @@ namespace AudioLink
 #endif
         }
 
-        public bool AudioDataIsAvailable()
+        public bool _AudioDataIsAvailable()
         {
             return audioDataToggle && audioData != null && audioData.Length > 0;
         }
 
-        public Color GetAudioDataAtPixel(int x, int y)
+        public Color _GetAudioDataAtPixel(int x, int y)
         {
             return audioData[y * AudioDataWidth + x];
         }
 
-        public Color LerpAudioDataAtPixel(float x, float y)
+        public Color _LerpAudioDataAtPixel(float x, float y)
         {
-            return Color.Lerp(GetAudioDataAtPixel((int)x, (int)y), GetAudioDataAtPixel((int)x + 1, (int)y), x % 1.0f);
+            return Color.Lerp(_GetAudioDataAtPixel((int)x, (int)y), _GetAudioDataAtPixel((int)x + 1, (int)y), x % 1.0f);
         }
 
-        public void SendAudioOutputData()
+        public void _SendAudioOutputData()
         {
             audioSource.GetOutputData(_audioFramesL, 0);                // left channel
 

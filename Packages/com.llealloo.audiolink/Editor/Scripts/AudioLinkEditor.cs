@@ -62,7 +62,7 @@ namespace AudioLink.Editor
                 GUI.backgroundColor = Color.red;
                 if (GUILayout.Button(DisableReadbackButtonContent))
                 {
-                    audioLink.DisableReadback();
+                    audioLink._DisableReadback();
                     EditorUtility.SetDirty(audioLink);
                 }
             }
@@ -71,7 +71,7 @@ namespace AudioLink.Editor
                 GUI.backgroundColor = Color.green;
                 if (GUILayout.Button(EnableReadbackButtonContent))
                 {
-                    audioLink.EnableReadback();
+                    audioLink._EnableReadback();
                     EditorUtility.SetDirty(audioLink);
                 }
             }

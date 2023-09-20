@@ -26,7 +26,7 @@ namespace AudioLink
 
         void Start()
         {
-            UpdateDataIndex();
+            _UpdateDataIndex();
             _initialPosition = transform.localPosition;
             _initialRotation = transform.localEulerAngles;
             _initialScale = transform.localScale;
@@ -47,7 +47,7 @@ namespace AudioLink
             }
         }
 
-        public void UpdateDataIndex()
+        public void _UpdateDataIndex()
         {
             _dataIndex = (band * 128) + delay;
         }

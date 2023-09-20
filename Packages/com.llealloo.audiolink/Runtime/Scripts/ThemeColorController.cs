@@ -61,8 +61,8 @@ namespace AudioLink
             _initThemeColorMode = themeColorDropdown.value;
             _themeColorMode = _initThemeColorMode;
 
-            UpdateGUI();
-            UpdateAudioLinkThemeColors();
+            _UpdateGUI();
+            _UpdateAudioLinkThemeColors();
 #if UDONSHARP
             if (Networking.IsOwner(gameObject))
                 RequestSerialization();
@@ -72,22 +72,22 @@ namespace AudioLink
 #if UDONSHARP
         public override void OnDeserialization()
         {
-            UpdateGUI();
-            UpdateAudioLinkThemeColors();
+            _UpdateGUI();
+            _UpdateAudioLinkThemeColors();
         }
 #endif
 
-        public void SelectCustomColor0() { SelectCustomColorN(0); }
-        public void SelectCustomColor1() { SelectCustomColorN(1); }
-        public void SelectCustomColor2() { SelectCustomColorN(2); }
-        public void SelectCustomColor3() { SelectCustomColorN(3); }
-        public void SelectCustomColorN(int n)
+        public void _SelectCustomColor0() { _SelectCustomColorN(0); }
+        public void _SelectCustomColor1() { _SelectCustomColorN(1); }
+        public void _SelectCustomColor2() { _SelectCustomColorN(2); }
+        public void _SelectCustomColor3() { _SelectCustomColorN(3); }
+        public void _SelectCustomColorN(int n)
         {
             customColorIndex = n;
-            UpdateGUI();
+            _UpdateGUI();
         }
 
-        public void OnGUIchange()
+        public void _OnGUIChange()
         {
             if (!_processGUIEvents)
             {
@@ -105,28 +105,28 @@ namespace AudioLink
                 sliderValue.value
             );
 
-            if (modeChanged) UpdateGUI();
-            UpdateAudioLinkThemeColors();
+            if (modeChanged) _UpdateGUI();
+            _UpdateAudioLinkThemeColors();
 #if UDONSHARP
             RequestSerialization();
 #endif
         }
 
-        public void ResetThemeColors()
+        public void _ResetThemeColors()
         {
             _themeColorMode = _initThemeColorMode;
             for (int i = 0; i < 4; ++i)
             {
                 customThemeColors[i] = _initCustomThemeColors[i];
             }
-            UpdateGUI();
-            UpdateAudioLinkThemeColors();
+            _UpdateGUI();
+            _UpdateAudioLinkThemeColors();
 #if UDONSHARP
             RequestSerialization();
 #endif
         }
 
-        public void UpdateGUI()
+        public void _UpdateGUI()
         {
             _processGUIEvents = false;
             themeColorDropdown.value = _themeColorMode;
@@ -150,7 +150,7 @@ namespace AudioLink
             _processGUIEvents = true;
         }
 
-        public void UpdateAudioLinkThemeColors()
+        public void _UpdateAudioLinkThemeColors()
         {
             if (audioLink == null) return;
             audioLink.themeColorMode = _themeColorMode;
@@ -158,7 +158,7 @@ namespace AudioLink
             audioLink.customThemeColor1 = customThemeColors[1];
             audioLink.customThemeColor2 = customThemeColors[2];
             audioLink.customThemeColor3 = customThemeColors[3];
-            audioLink.UpdateThemeColors();
+            audioLink._UpdateThemeColors();
         }
     }
 }

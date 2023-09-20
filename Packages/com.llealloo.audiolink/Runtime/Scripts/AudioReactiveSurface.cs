@@ -60,10 +60,10 @@ namespace AudioLink
         void Start()
         {
             InitIDs();
-            UpdateMaterial();
+            _UpdateMaterial();
         }
 
-        public void UpdateMaterial()
+        public void _UpdateMaterial()
         {
             MaterialPropertyBlock block = new MaterialPropertyBlock();
             MeshRenderer mesh = GetComponent<MeshRenderer>();

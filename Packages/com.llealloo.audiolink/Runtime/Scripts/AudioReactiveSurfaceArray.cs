@@ -73,10 +73,10 @@ namespace AudioLink
         {
             InitIDs();
             _childRenderers = transform.GetComponentsInChildren<Renderer>(true);
-            UpdateChildren();
+            _UpdateChildren();
         }
 
-        public void UpdateChildren()
+        public void _UpdateChildren()
         {
 
             foreach (Renderer renderer in _childRenderers)

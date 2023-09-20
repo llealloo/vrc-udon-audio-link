@@ -129,7 +129,7 @@ namespace AudioLink
             else
             {
                 themeColorController.audioLink = audioLink;
-                themeColorController.UpdateAudioLinkThemeColors();
+                themeColorController._UpdateAudioLinkThemeColors();
             }
 
             GetSettings();
@@ -152,7 +152,7 @@ namespace AudioLink
             _threshold2Rect = threshold2Slider.GetComponent<RectTransform>();
             _threshold3Rect = threshold3Slider.GetComponent<RectTransform>();
 
-            UpdateSettings();
+            _UpdateSettings();
         }
 
         private void GetSettings()
@@ -176,7 +176,7 @@ namespace AudioLink
             threshold3Slider.value = audioLink.threshold3;
         }
 
-        public void UpdateSettings()
+        public void _UpdateSettings()
         {
             // Update labels
             gainLabel.text = "Gain: " + ((int)Remap(gainSlider.value, 0f, 2f, 0f, 200f)).ToString() + "%";
@@ -229,10 +229,10 @@ namespace AudioLink
             audioLink.threshold2 = threshold2Slider.value;
             audioLink.threshold3 = threshold3Slider.value;
 
-            audioLink.UpdateSettings();
+            audioLink._UpdateSettings();
         }
 
-        public void ResetSettings()
+        public void _ResetSettings()
         {
             gainSlider.value = _initGain;
             trebleSlider.value = _initTreble;
@@ -249,7 +249,7 @@ namespace AudioLink
             threshold3Slider.value = _initThreshold3;
             if (themeColorController != null)
             {
-                themeColorController.ResetThemeColors();
+                themeColorController._ResetThemeColors();
             }
         }
 

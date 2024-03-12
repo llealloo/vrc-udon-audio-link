@@ -1,0 +1,214 @@
+{
+    "ConfigFormat": 1,
+    "ConfigVersion": "0.1.0",
+    "MidiDecks": [
+        {
+            "Name": "Virtual",
+            "Manufacturer": "Virtual",
+            "Keys": {
+                "Enabled": {
+                    "ID": 0
+                },
+                "ColorChord": {
+                    "ID": 1
+                },
+                "AutoGain": {
+                    "ID": 2
+                },
+                "Reset": {
+                    "ID": 3
+                },
+
+                "BandSelect0": {
+                    "ID": 4
+                },
+                "BandSelect1": {
+                    "ID": 5
+                },
+                "BandSelect2": {
+                    "ID": 6
+                },
+                "BandSelect3": {
+                    "ID": 7
+                }
+            },
+            "Knobs": {
+                "Gain": {
+                    "ID": 8
+                },
+                "Bass": {
+                    "ID": 9
+                },
+                "Treble": {
+                    "ID": 10
+                },
+                "Length": {
+                    "ID": 11
+                },
+                "Falloff": {
+                    "ID": 12
+                },
+
+                "BandSelectHue": {
+                    "ID": 13
+                },
+                "BandSelectSaturation": {
+                    "ID": 14
+                },
+                "BandSelectValue": {
+                    "ID": 15
+                }, 
+                "BandSelectThreshold": {
+                    "ID": 16
+                },
+                "BandSelectStart": {
+                    "ID": 17
+                }
+            }
+        },
+        {
+            "Name": "Launchkey Mini",
+            "Manufacturer": "Novation",
+            "Keys": {
+                "Enabled": {
+                    "ID": 0,
+                    "Toggle": false
+                },
+                "ColorChord": {
+                    "ID": 1,
+                    "Toggle": false
+                },
+                "AutoGain": {
+                    "ID": 2,
+                    "Toggle": false
+                },
+                "Reset": {
+                    "ID": 3,
+                    "Toggle": false
+                },
+
+                "BandSelect0": {
+                    "ID": 4,
+                    "Toggle": false
+                },
+                "BandSelect1": {
+                    "ID": 5,
+                    "Toggle": false
+                },
+                "BandSelect2": {
+                    "ID": 6,
+                    "Toggle": false
+                },
+                "BandSelect3": {
+                    "ID": 7,
+                    "Toggle": false
+                }
+            },
+            "Knobs": {
+                "Gain": {
+                    "ID": 8
+                },
+                "Bass": {
+                    "ID": 9
+                },
+                "Treble": {
+                    "ID": 10
+                },
+                "Length": {
+                    "ID": 11
+                },
+                "Falloff": {
+                    "ID": 12
+                },
+
+                "BandSelectHue": {
+                    "ID": 13
+                },
+                "BandSelectSaturation": {
+                    "ID": 14
+                },
+                "BandSelectValue": {
+                    "ID": 15
+                }, 
+                "BandSelectThreshold": {
+                    "ID": 16
+                },
+                "BandSelectStart": {
+                    "ID": 17
+                }
+            }
+        },
+        {
+            "Name": "MPD226",
+            "Manufacturer": "AKAI Professional",
+            "Keys": {
+                "Enabled": {
+                    "ID": 0,
+                    "Toggle": false
+                },
+                "ColorChord": {
+                    "ID": 1,
+                    "Toggle": false
+                },
+                "AutoGain": {
+                    "ID": 2,
+                    "Toggle": false
+                },
+                "Reset": {
+                    "ID": 3,
+                    "Toggle": false
+                },
+
+                "BandSelect0": {
+                    "ID": 4,
+                    "Toggle": false
+                },
+                "BandSelect1": {
+                    "ID": 5,
+                    "Toggle": false
+                },
+                "BandSelect2": {
+                    "ID": 6,
+                    "Toggle": false
+                },
+                "BandSelect3": {
+                    "ID": 7,
+                    "Toggle": false
+                }
+            },
+            "Knobs": {
+                "Gain": {
+                    "ID": 8
+                },
+                "Bass": {
+                    "ID": 9
+                },
+                "Treble": {
+                    "ID": 10
+                },
+                "Length": {
+                    "ID": 11
+                },
+                "Falloff": {
+                    "ID": 12
+                },
+
+                "BandSelectHue": {
+                    "ID": 13
+                },
+                "BandSelectSaturation": {
+                    "ID": 14
+                },
+                "BandSelectValue": {
+                    "ID": 15
+                }, 
+                "BandSelectThreshold": {
+                    "ID": 16
+                },
+                "BandSelectStart": {
+                    "ID": 17
+                }
+            }
+        }
+    ]
+}

@@ -19,13 +19,22 @@ namespace AudioLink
         public string ytdlpURL = "https://www.youtube.com/watch?v=SFTcZ1GXOCQ";
         ytdlpRequest _currentRequest = null;
 
-        [SerializeField]
-        public bool showVideoPreviewInComponent = false;
+        [SerializeField] public bool showVideoPreviewInComponent = false;
+        [SerializeField] public bool enableGlobalVideoTexture = true;
 
         public VideoPlayer videoPlayer = null;
 
         [SerializeField]
         public Resolution resolution = Resolution._720p;
+
+        public bool enableGlobalTexture = true;
+        public bool forceStandbyTexture = false;
+        public bool showStandbyIfPaused = true;
+        public Texture2D standbyTexture;
+
+        private const string _globalVideoTextureName = "_Udon_VideoTex";
+        private int _globalVideoTextureId;
+        private bool _globalTextureActive = false;
 
         public enum Resolution
         {
@@ -39,6 +48,7 @@ namespace AudioLink
 
         void OnEnable()
         {
+            _globalVideoTextureId = Shader.PropertyToID(_globalVideoTextureName);
             RequestPlay();
         }
 
@@ -47,7 +57,7 @@ namespace AudioLink
             _currentRequest = ytdlpURLResolver.Resolve(ytdlpURL, (int)resolution);
         }
 
-        void Update()
+        private void Update()
         {
             if (_currentRequest != null && _currentRequest.isDone)
             {
@@ -55,6 +65,8 @@ namespace AudioLink
                 _currentRequest = null;
             }
         }
+
+        private void LateUpdate() => ExportGlobalVideoTexture();
 
         public void UpdateUrl(string resolved)
         {
@@ -126,6 +138,34 @@ namespace AudioLink
                 AudioSource audioSourceOutput = videoPlayer.GetTargetAudioSource(0);
                 if (audioSourceOutput != null)
                     audioSourceOutput.volume = Mathf.Clamp01(volume);
+            }
+        }
+
+        private void ExportGlobalVideoTexture()
+        {
+            Texture texture = null;
+            bool showStandby = forceStandbyTexture;
+            if (!showStandby && videoPlayer != null)
+            {
+                // enable pausing or stopping the video to make the standby texture show
+                showStandby |= (!videoPlayer.isPaused || showStandbyIfPaused) && !videoPlayer.isPlaying;
+                if (!showStandby) texture = videoPlayer.targetTexture != null ? videoPlayer.targetTexture : videoPlayer.texture;
+            }
+
+            showStandby |= texture == null;
+            if (showStandby && standbyTexture != null)
+                texture = standbyTexture;
+
+            if (enableGlobalTexture)
+            {
+                Shader.SetGlobalTexture(_globalVideoTextureId, texture);
+                _globalTextureActive = true;
+            }
+            // if globals ever get disabled, unset the custom texture global flag as well
+            else if (_globalTextureActive)
+            {
+                _globalTextureActive = false;
+                Shader.SetGlobalTexture(_globalVideoTextureId, null);
             }
         }
     }
@@ -301,7 +341,8 @@ namespace AudioLink
                     if (EditorGUI.EndChangeCheck())
                     {
                         EditorUtility.SetDirty(_ytdlpPlayer);
-                    };
+                    }
+
                     _ytdlpPlayer.resolution = (ytdlpPlayer.Resolution)EditorGUILayout.EnumPopup(_ytdlpPlayer.resolution, GUILayout.Width(65));
                 }
 
@@ -392,6 +433,15 @@ namespace AudioLink
             // Video preview
             using (new EditorGUI.DisabledScope(!available || !hasVideoPlayer))
             {
+                Header("Global Video Texture Settings", -1);
+                using (new EditorGUILayout.VerticalScope("box"))
+                {
+                    _ytdlpPlayer.enableGlobalTexture = EditorGUILayout.Toggle(new GUIContent("  Enable Global Video Texture"), _ytdlpPlayer.enableGlobalTexture);
+                    _ytdlpPlayer.showStandbyIfPaused = EditorGUILayout.Toggle(new GUIContent("  Show Standby Texture when Paused"), _ytdlpPlayer.showStandbyIfPaused);
+                    _ytdlpPlayer.forceStandbyTexture = EditorGUILayout.Toggle(new GUIContent("  Force Show Standby Texture"), _ytdlpPlayer.forceStandbyTexture);
+                    _ytdlpPlayer.standbyTexture = (Texture2D)EditorGUILayout.ObjectField(new GUIContent("  Standby Texture"), _ytdlpPlayer.standbyTexture, typeof(Texture2D), true, GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                }
+
                 _ytdlpPlayer.showVideoPreviewInComponent = EditorGUILayout.Toggle(new GUIContent("  Show Video Preview", EditorGUIUtility.IconContent("d_ViewToolOrbit On").image), _ytdlpPlayer.showVideoPreviewInComponent);
 
                 if (_ytdlpPlayer.showVideoPreviewInComponent && available && hasVideoPlayer && _ytdlpPlayer.videoPlayer.texture != null)
@@ -415,7 +465,17 @@ namespace AudioLink
 #endif
             }
         }
-    }
 
+        /// <summary>
+        /// Draws some text in the same style as the [Header] attribute.
+        /// </summary>
+        /// <param name="header">the desired text to draw</param>
+        /// <param name="fontSizeDelta"></param>
+        public static void Header(string header, int fontSizeDelta = 0)
+        {
+            var style = new GUIStyle(EditorStyles.boldLabel) { fontSize = EditorStyles.largeLabel.fontSize + fontSizeDelta };
+            EditorGUILayout.LabelField(header, style);
+        }
+    }
 }
 #endif

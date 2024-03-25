@@ -19,13 +19,11 @@ namespace AudioLink
         public string ytdlpURL = "https://www.youtube.com/watch?v=SFTcZ1GXOCQ";
         ytdlpRequest _currentRequest = null;
 
-        [SerializeField]
-        public bool showVideoPreviewInComponent = false;
+        [SerializeField] public bool showVideoPreviewInComponent = false;
 
         public VideoPlayer videoPlayer = null;
 
-        [SerializeField]
-        public Resolution resolution = Resolution._720p;
+        [SerializeField] public Resolution resolution = Resolution._720p;
 
         public enum Resolution
         {
@@ -143,6 +141,25 @@ namespace AudioLink
         private static string _ytdlpPath = "";
         private static bool _ytdlpFound = false;
 
+        private const string userDefinedYTDLPathKey = "YTDL-PATH-CUSTOM";
+        private const string userDefinedYTDLPathMenu = "Tools/AudioLink/Select Custom YTDL Location";
+
+        [MenuItem(userDefinedYTDLPathMenu, priority = 1)]
+        private static void SelectYtdlInstall()
+        {
+            string ytdlPath = EditorPrefs.GetString(userDefinedYTDLPathKey, "");
+            string tpath = ytdlPath.Substring(0, ytdlPath.LastIndexOf("/", StringComparison.Ordinal) + 1);
+            string path = EditorUtility.OpenFilePanel("Select YTDL Location", tpath, "");
+            EditorPrefs.SetString(userDefinedYTDLPathKey, path ?? string.Empty);
+        }
+
+        [MenuItem(userDefinedYTDLPathMenu, true, priority = 1)]
+        private static bool ValidateSelectYrdlInstall()
+        {
+            Menu.SetChecked(userDefinedYTDLPathMenu, EditorPrefs.GetString(userDefinedYTDLPathKey, string.Empty) != string.Empty);
+            return true;
+        }
+
         public static bool IsytdlpAvailable()
         {
             if (_ytdlpFound)
@@ -155,36 +172,43 @@ namespace AudioLink
         public static void Locateytdlp()
         {
             _ytdlpFound = false;
+
+            // check for a custom install location
+            string customPath = EditorPrefs.GetString(userDefinedYTDLPathKey, string.Empty);
+            if (!string.IsNullOrEmpty(customPath))
+            {
+                if (File.Exists(customPath))
+                {
+                    Debug.Log($"[AudioLink:ytdlp] Custom YTDL location found: {customPath}");
+                    _ytdlpPath = customPath;
+                    _ytdlpFound = true;
+                }
+
+                Debug.LogWarning($"[AudioLink:ytdlp] Custom YTDL location detected but does not exist: {customPath}");
+                Debug.Log("[AudioLink:ytdlp] Checking other locations...");
+            }
+
+
 #if UNITY_EDITOR_WIN
             string[] splitPath = Application.persistentDataPath.Split('/', '\\');
-
             _ytdlpPath = string.Join("\\", splitPath.Take(splitPath.Length - 2)) + "\\VRChat\\VRChat\\Tools\\yt-dlp.exe";
+            if (!File.Exists(_ytdlpPath))
+                _ytdlpPath = _localytdlpPath;
 #else
             _ytdlpPath = "/usr/bin/yt-dlp";
 #endif
-            if (!File.Exists(_ytdlpPath))
-            {
-                _ytdlpPath = _localytdlpPath;
-            }
 
             if (!File.Exists(_ytdlpPath))
             {
-#if UNITY_EDITOR_WIN
-                _ytdlpPath = LocateExecutable("yt-dlp.exe");
-#else
-                _ytdlpPath = LocateExecutable("yt-dlp");
-#endif
+                string[] possibleExecutableNames = { "yt-dlp", "ytdlp", "youtube-dlp", "youtubedlp", "yt-dl", "ytdl", "youtube-dl", "youtubedl" };
+                _ytdlpPath = LocateExecutable(possibleExecutableNames);
             }
 
             if (!File.Exists(_ytdlpPath))
-            {
                 return;
-            }
-            else
-            {
-                _ytdlpFound = true;
-                Debug.Log($"[AudioLink:ytdlp] Found yt-dlp at path '{_ytdlpPath}'");
-            }
+
+            _ytdlpFound = true;
+            Debug.Log($"[AudioLink:ytdlp] Found yt-dlp at path '{_ytdlpPath}'");
         }
 
         public static ytdlpRequest Resolve(string url, int resolution = 720)
@@ -211,10 +235,7 @@ namespace AudioLink
             proc.StartInfo.FileName = _ytdlpPath;
             proc.StartInfo.Arguments = $"--no-check-certificate --no-cache-dir --rm-cache-dir -f \"mp4[height<=?{resolution}]/best[height<=?{resolution}]\" --get-url \"{url}\"";
 
-            proc.Exited += (sender, args) =>
-            {
-                proc.Dispose();
-            };
+            proc.Exited += (sender, args) => { proc.Dispose(); };
 
             proc.OutputDataReceived += (sender, args) =>
             {
@@ -239,22 +260,46 @@ namespace AudioLink
             }
         }
 
-        private static string LocateExecutable(string name)
+        private static string LocateExecutable(params string[] names)
         {
-            if (!File.Exists(name))
+            string exists = names.FirstOrDefault(File.Exists);
+            // check for any names being a valid exact path
+            if (!string.IsNullOrEmpty(exists)) return Path.GetFullPath(exists);
+            // search in path
+            string path = Environment.GetEnvironmentVariable("PATH") ?? "";
+#if UNITY_EDITOR_OSX
+            // M-series Macs use a different location for Homebrew packages to prevent conflicts with x86_64 binaries.
+            // As a result, ARM packages are found in the "/opt/homebrew/bin" location, which is not normally in PATH.
+            path += Path.PathSeparator + "/opt/homebrew/bin/";
+#endif
+            string[] paths = path.Split(Path.PathSeparator);
+            // check each possible executable name
+            foreach (string n in names)
             {
-                if (Path.GetDirectoryName(name) == string.Empty)
+                string name = n;
+#if UNITY_EDITOR_WIN
+                // append the windows file extension
+                name += ".exe";
+#endif
+                // return the full name if it has a directory prefix and is part of a valid and existing full path
+                if (Path.GetDirectoryName(name) != string.Empty)
                 {
-                    string[] path = (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator);
-                    foreach (string dir in path)
-                    {
-                        string trimmed = dir.Trim();
-                        if (!string.IsNullOrEmpty(trimmed) && File.Exists(Path.Combine(trimmed, name)))
-                            return Path.GetFullPath(Path.Combine(trimmed, name));
-                    }
+                    string full = Path.GetFullPath(name);
+                    if (File.Exists(full)) return full;
+                }
+
+                // otherwise go through each possible PATH location to check for a valid executable.
+                foreach (string dir in paths)
+                {
+                    string trimmed = dir.Trim();
+                    if (string.IsNullOrEmpty(trimmed)) continue;
+                    string combined = Path.Combine(trimmed, name);
+                    if (File.Exists(combined)) return Path.GetFullPath(combined);
                 }
             }
-            return Path.GetFullPath(name);
+
+            // no executable was found...
+            return string.Empty;
         }
     }
 
@@ -286,7 +331,6 @@ namespace AudioLink
 #else
             bool available = ytdlpURLResolver.IsytdlpAvailable();
 #endif
-
             bool hasVideoPlayer = _ytdlpPlayer.videoPlayer != null;
             float playbackTime = hasVideoPlayer ? _ytdlpPlayer.GetPlaybackTime() : 0;
             double videoLength = hasVideoPlayer ? _ytdlpPlayer.videoPlayer.length : 0;
@@ -301,7 +345,9 @@ namespace AudioLink
                     if (EditorGUI.EndChangeCheck())
                     {
                         EditorUtility.SetDirty(_ytdlpPlayer);
-                    };
+                    }
+
+                    ;
                     _ytdlpPlayer.resolution = (ytdlpPlayer.Resolution)EditorGUILayout.EnumPopup(_ytdlpPlayer.resolution, GUILayout.Width(65));
                 }
 
@@ -352,8 +398,8 @@ namespace AudioLink
                     // Media Controls
                     using (new EditorGUILayout.HorizontalScope())
                     {
-                        bool isPlaying = hasVideoPlayer ? _ytdlpPlayer.videoPlayer.isPlaying : false;
-                        bool isPaused = hasVideoPlayer ? _ytdlpPlayer.videoPlayer.isPaused : false;
+                        bool isPlaying = hasVideoPlayer && _ytdlpPlayer.videoPlayer.isPlaying;
+                        bool isPaused = hasVideoPlayer && _ytdlpPlayer.videoPlayer.isPaused;
                         bool isStopped = !isPlaying && !isPaused;
 
                         bool play = GUILayout.Toggle(isPlaying, new GUIContent(" Play", EditorGUIUtility.IconContent("d_PlayButton On").image), "Button") != isPlaying;
@@ -416,6 +462,5 @@ namespace AudioLink
             }
         }
     }
-
 }
 #endif
